@@ -1,0 +1,46 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateNotificationInput {
+  message: String!
+  metadata: JSON
+  payload: JSON
+  title: String!
+  type: String
+  userId: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type Mutation {
+  createNotification(input: CreateNotificationInput!): Notification!
+}
+
+type Notification {
+  _id: ID!
+  createdAt: DateTime!
+  emailSent: Boolean!
+  emailSentAt: DateTime
+  message: String!
+  metadata: JSON
+  payload: JSON
+  read: Boolean!
+  readAt: DateTime
+  title: String!
+  type: String!
+  updatedAt: DateTime!
+  userId: ID!
+}
+
+type Query {
+  getUserNotifications(userId: String!): [Notification!]!
+}
