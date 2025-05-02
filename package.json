@@ -25,12 +25,13 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/event-emitter": "^3.0.1",
-    "@nestjs/graphql": "^13.0.4",
+    "@nestjs/graphql": "^13.1.0",
     "@nestjs/microservices": "^11.0.13",
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-socket.io": "^11.1.0",
     "@nestjs/websockets": "^11.1.0",
+    "@types/graphql-upload": "^17.0.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.7",
     "apollo-server-express": "^3.13.0",
@@ -41,6 +42,7 @@
     "graphql-subscriptions": "^3.0.0",
     "graphql-tools": "^9.0.18",
     "graphql-type-json": "^0.3.2",
+    "graphql-upload": "^17.0.0",
     "graphql-ws": "^6.0.4",
     "ioredis": "^5.6.1",
     "joi": "^17.13.3",
@@ -49,7 +51,8 @@
     "redis": "^4.7.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "subscriptions-transport-ws": "^0.11.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

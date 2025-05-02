@@ -4,9 +4,9 @@ import { Model, Types } from 'mongoose';
 import { Notification, NotificationDocument } from './entities/notification.entity';
 import { CreateNotificationInput } from './dto/create-notification.dto';
 import { Role } from './enums/Role.enum';
-import { WebSocketService } from 'src/webSocket/websocket.service';
 import { MailService } from 'src/email/email.service';
 import { UserCacheService } from 'src/rabbitMq/user-cache.service';
+import { PubSub } from 'graphql-subscriptions';
 
 @Injectable()
 export class NotificationService {
@@ -16,10 +16,9 @@ export class NotificationService {
     @InjectModel(Notification.name)
     private readonly notificationModel: Model<NotificationDocument>,
     private readonly userCacheService: UserCacheService,
-    private readonly webSocketService: WebSocketService,
     private readonly mailService: MailService,
+    @Inject('PUB_SUB') private readonly pubSub: PubSub,
   ) {}
-
   async create(
     createNotificationInput: CreateNotificationInput,
   ): Promise<NotificationDocument> {
@@ -28,7 +27,15 @@ export class NotificationService {
       userId: new Types.ObjectId(createNotificationInput.userId),
     });
 
-    return createdNotification.save();
+    const savedNotification = await createdNotification.save();
+    
+    // Publier la notification via GraphQL Subscription
+    await this.pubSub.publish('notificationAdded', {
+      notificationAdded: savedNotification.toObject(),
+      userId: createNotificationInput.userId
+    });
+
+    return savedNotification;
   }
 
   async findAllForUser(userId: string): Promise<NotificationDocument[]> {
@@ -197,7 +204,6 @@ export class NotificationService {
   }
 
   private async handleSuperAdminCreated(event: any): Promise<void> {
-    // Logique spécifique pour la création d'un Super Admin
     this.logger.log(`Super Admin created: ${JSON.stringify(event.payload)}`);
   }
 
@@ -254,37 +260,17 @@ export class NotificationService {
     title: string;
     message: string;
     type: 'email' | 'push' | 'both';
-    payload?: Record<string, any>; // Rend le payload optionnel
+    payload?: Record<string, any>;
   }): Promise<NotificationDocument> {
     try {
-      // Créer la notification en base de données avec un payload par défaut si non fourni
       const notification = await this.create({
         userId: params.recipientId,
         title: params.title,
         message: params.message,
         type: params.type,
-        payload: params.payload || {} // Valeur par défaut si payload est undefined
+        payload: params.payload || {}
       });
-  
-      // Type guard pour vérifier que notification.payload existe
-      if (!notification.payload) {
-        notification.payload = {};
-        await notification.save();
-      }
-  
-      // Envoyer via WebSocket si nécessaire
-      if (params.type === 'push' || params.type === 'both') {
-        await this.webSocketService.sendNotification(
-          params.recipientId,
-          {
-            notificationId: notification._id.toString(),
-            type: notification.payload?.eventType || 'GENERAL_NOTIFICATION', // Valeur par défaut
-            message: notification.message,
-            payload: notification.payload
-          }
-        );
-      }
-  
+
       // Envoyer par email si nécessaire
       if (params.type === 'email' || params.type === 'both') {
         const recipient = await this.userCacheService.getUserById(params.recipientId);
@@ -295,12 +281,11 @@ export class NotificationService {
               title: params.title,
               message: params.message,
               actionLink: this.getActionLink(notification.payload?.eventType, notification.payload)
-
             }
           );
         }
       }
-  
+
       return notification;
     } catch (error) {
       this.logger.error('Error creating and sending notification:', error);
@@ -308,17 +293,19 @@ export class NotificationService {
     }
   }
 
-  private getActionLink(eventType?: string, payload?: any): string | undefined {
+ private getActionLink(eventType?: string, payload?: any): string | undefined {
     const link = this.generateActionLink(eventType, payload);
     return link !== null ? link : undefined;
   }
+
   async getUserNotifications(userId: string): Promise<NotificationDocument[]> {
     return this.notificationModel
       .find({ userId: new Types.ObjectId(userId) })
       .sort({ createdAt: -1 })
       .exec();
   }
-  private generateActionLink(eventType?: string, payload?: any): string | null {
+
+ private generateActionLink(eventType?: string, payload?: any): string | null {
     if (!eventType || !payload) {
       return null;
     }

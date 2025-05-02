@@ -10,7 +10,6 @@ import * as Joi from 'joi';
 import { NotificationModule } from './notification/notification.module';
 import { EmailModule } from './email/email.module';
 import { RabbitMQModule } from './rabbitMq/rabbitmq.module';
-import { WebSocketModule } from './webSocket/websocket.module';
 import mailConfig from './config/mail.config';
 
 @Module({
@@ -42,13 +41,16 @@ import mailConfig from './config/mail.config';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
-      playground: true,
+      playground:true,
       introspection: true,
+      subscriptions: {
+        'graphql-ws': true,  // Protocole moderne
+        'subscriptions-transport-ws': true  // Pour compatibilité
+      },
     }),
 
     RabbitMQModule,
     EmailModule,
-    WebSocketModule,
     NotificationModule,
   ],
 })

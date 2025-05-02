@@ -23,6 +23,8 @@ scalar JSON
 
 type Mutation {
   createNotification(input: CreateNotificationInput!): Notification!
+  markAllNotificationsAsRead(userId: String!): Boolean!
+  markNotificationAsRead(notificationId: String!): Notification!
 }
 
 type Notification {
@@ -42,5 +44,11 @@ type Notification {
 }
 
 type Query {
+  getUnreadNotifications(userId: String!): [Notification!]!
   getUserNotifications(userId: String!): [Notification!]!
+}
+
+type Subscription {
+  notificationAdded(userId: String!): Notification!
+  unreadNotificationAdded(userId: String!): Notification!
 }

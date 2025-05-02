@@ -6,7 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Notification, NotificationSchema } from './entities/notification.entity';
 import { EmailModule } from '../email/email.module';
 import { RabbitMQModule } from 'src/rabbitMq/rabbitmq.module';
-import { WebSocketModule } from 'src/webSocket/websocket.module';
+import { PubSub } from 'graphql-subscriptions';
 
 @Module({
   imports: [
@@ -15,9 +15,14 @@ import { WebSocketModule } from 'src/webSocket/websocket.module';
     ]),
     forwardRef(() => RabbitMQModule),
     EmailModule,
-    forwardRef(() => WebSocketModule),
+    
   ],
-  providers: [NotificationService, NotificationResolver],
+  providers: [NotificationService, NotificationResolver,
+    {
+      provide: 'PUB_SUB',
+      useValue: new PubSub(),
+    },
+  ],
   exports: [NotificationService],
 })
 export class NotificationModule {}
