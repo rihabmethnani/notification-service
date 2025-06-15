@@ -1,10 +1,40 @@
 import { registerAs } from '@nestjs/config';
+import * as Joi from 'joi';
+import { mailConfigValidation } from './mail.config.schema';
 
-export default registerAs('mail', () => ({
-  from: process.env.MAIL_FROM,
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: process.env.SMTP_SECURE === 'true',
-  user: process.env.SMTP_USER,
-  password: process.env.SMTP_PASSWORD,
-}));
+const validateEnv = (env: NodeJS.ProcessEnv) => {
+  const schema = Joi.object(mailConfigValidation);
+  
+  const mailEnv = {
+    MAIL_HOST: env.MAIL_HOST,
+    MAIL_PORT: env.MAIL_PORT,
+    MAIL_SECURE: env.MAIL_SECURE,
+    MAIL_USER: env.MAIL_USER,
+    MAIL_PASSWORD: env.MAIL_PASSWORD,
+    MAIL_FROM: env.MAIL_FROM,
+  };
+
+  const { error, value } = schema.validate(mailEnv, {
+    abortEarly: false,
+    allowUnknown: true,
+  });
+
+  if (error) {
+    throw new Error(`Mail configuration validation error: ${error.message}`);
+  }
+
+  return value;
+};
+
+export default registerAs('mail', () => {
+  const env = validateEnv(process.env);
+
+  return {
+    host: env.MAIL_HOST,
+    port: parseInt(env.MAIL_PORT, 10),
+    secure: env.MAIL_SECURE === 'true',
+    user: env.MAIL_USER,
+    password: env.MAIL_PASSWORD,
+    from: env.MAIL_FROM,
+  };
+});

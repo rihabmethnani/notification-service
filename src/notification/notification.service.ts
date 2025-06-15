@@ -255,7 +255,7 @@ export class NotificationService {
     }
   }
 
-  private async createAndSendNotification(params: {
+   async createAndSendNotification(params: {
     recipientId: string;
     title: string;
     message: string;
@@ -349,18 +349,56 @@ async handlePartnerCreatedEvent(event: any): Promise<void> {
   }
 }
 
-async handleUserLoggedInEvent(event: any): Promise<void> {
-  try {
-    const { userId, timestamp, ipAddress, deviceInfo } = event;
+// async handleUserLoggedInEvent(event: any): Promise<void> {
+//   try {
+//     // 1. Validation de base
+//     if (!event?.payload) {
+//       this.logger.warn('Event payload manquant');
+//       return;
+//     }
 
-    this.logger.log(`USER_LOGGED_IN event received for user: ${userId}`);
-    
-  
-    this.logger.debug(`User ${userId} logged in at ${timestamp || 'unknown time'} from ${ipAddress || 'unknown IP'} using ${deviceInfo || 'unknown device'}`);
-    
-  } catch (error) {
-    this.logger.error('Error handling USER_LOGGED_IN event:', error);
-    throw error;
-  }
-}
+//     // 2. Conversion de l'ObjectId en string
+//     const userId = event.payload.userId?.toString();
+//     if (!userId) {
+//       this.logger.warn('USER_LOGGED_IN - userId manquant ou invalide', {
+//         receivedPayload: event.payload
+//       });
+//       return;
+//     }
+
+//     // 3. Récupération des infos utilisateur
+//     const user = await this.userCacheService.getUserById(userId);
+//     if (!user) {
+//       this.logger.warn(`Utilisateur non trouvé dans le cache: ${userId}`);
+//       return;
+//     }
+
+//     // 4. Journalisation détaillée
+//     this.logger.log(`Connexion détectée pour ${user.email} (${userId})`, {
+//       role: user.role,
+//       timestamp: event.payload.timestamp || 'inconnu',
+//       isValid: event.payload.isValid
+//     });
+
+//     // 5. Notification optionnelle
+//     await this.createAndSendNotification({
+//       recipientId: userId,
+//       title: 'Nouvelle connexion',
+//       message: `Connexion détectée à ${new Date(event.payload.timestamp).toLocaleString()}`,
+//       type: 'push',
+//       payload: {
+//         eventType: 'USER_LOGIN',
+//         userId,
+//         email: user.email
+//       }
+//     });
+
+//   } catch (error) {
+//     this.logger.error('Erreur traitement USER_LOGGED_IN', {
+//       error: error.message,
+//       stack: error.stack,
+//       originalEvent: event
+//     });
+//   }
+// }
 }

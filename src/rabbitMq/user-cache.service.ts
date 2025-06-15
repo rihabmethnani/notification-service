@@ -2,7 +2,6 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { createClient } from 'redis';
 import axios, { AxiosError } from 'axios';
 
-// Interface pour un utilisateur
 export interface User {
   _id: string;
   email: string;
@@ -18,7 +17,7 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
 
   constructor() {
     this.redisClient = createClient({
-      url: 'redis://localhost:6379', // URL de votre instance Redis
+      url: 'redis://localhost:6379',
     });
 
     this.redisClient.on('error', (err) => {
@@ -28,7 +27,6 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     try {
-      // Vérifiez si le client Redis est déjà connecté
       if (!this.redisClient.isOpen) {
         await this.redisClient.connect();
         console.log('✅ Connexion Redis réussie.');
@@ -57,7 +55,7 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
     const graphqlEndpoint = 'http://localhost:4000/graphql';
     const loginQuery = `
       mutation Login {
-        login(email: "admin@admin.com", password: "admin123") {
+        login(email: "superAdmin@superAdmin.com", password: "superAdmin123") {
           access_token
         }
       }
@@ -83,17 +81,14 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
 
   async initializeCache() {
     try {
-      // Vérifiez si Redis est connecté avant de continuer
       if (!this.redisClient.isOpen) {
         console.log("🔌 Redis client not connected, trying to reconnect...");
         await this.redisClient.connect();
-      } else {
-        console.log("✅ Redis client is already connected.");
       }
-  
+
       const graphqlEndpoint = 'http://localhost:4000/graphql';
       const jwtToken = await this.getJwtToken();
-  
+
       const query = `
         query GetAllUsers {
           getAllUsers {
@@ -104,7 +99,7 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
           }
         }
       `;
-  
+
       const response = await axios.post(
         graphqlEndpoint,
         { query },
@@ -115,26 +110,27 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
           },
         }
       );
-  
+
       if (response.data.errors) {
-        throw new Error(`GraphQL Errors: ${JSON.stringify(response.data.errors)}`);
+        console.error('❌ Erreurs GraphQL:', response.data.errors);
+        throw new Error('GraphQL error');
       }
-  
+
       const users = response.data?.data?.getAllUsers;
-      if (!users) {
-        throw new Error('Invalid GraphQL response: Missing users data');
+      if (!users || !Array.isArray(users)) {
+        console.error('❌ Réponse GraphQL invalide:', JSON.stringify(response.data, null, 2));
+        throw new Error('Invalid GraphQL response: Missing or malformed users data');
       }
-  
+
       for (const user of users) {
-        await this.redisClient.set(`user:${user._id}`, JSON.stringify(user), { EX: 3600 });
+        await this.setUserById(user._id, user);
       }
-  
+
       console.log('✅ Cache Redis initialisé avec tous les utilisateurs.');
     } catch (error) {
       console.error('❌ Échec de l’initialisation du cache Redis:', error);
     }
   }
-  
 
   async getUserById(id: string): Promise<any> {
     try {
@@ -153,11 +149,10 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
       throw error;
     }
   }
-  
   private async fetchUserFromGraphQL(id: string): Promise<any> {
     const graphqlEndpoint = 'http://localhost:4000/graphql';
     const jwtToken = await this.getJwtToken();
-  
+
     const query = `
       query GetUserById {
         getUserById(id: "${id}") {
@@ -168,7 +163,7 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
         }
       }
     `;
-  
+
     try {
       const response = await axios.post(
         graphqlEndpoint,
@@ -180,12 +175,12 @@ export class UserCacheService implements OnModuleInit, OnModuleDestroy {
           },
         }
       );
-  
+
       if (response.data.errors) {
         console.error('❌ Erreur GraphQL:', response.data.errors);
         return null;
       }
-  
+
       return response.data.data.getUserById;
     } catch (error) {
       console.error('❌ Erreur lors de la récupération de l’utilisateur via GraphQL:', error);

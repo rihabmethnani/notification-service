@@ -11,22 +11,16 @@ import { NotificationModule } from './notification/notification.module';
 import { EmailModule } from './email/email.module';
 import { RabbitMQModule } from './rabbitMq/rabbitmq.module';
 import mailConfig from './config/mail.config';
+import { mailConfigValidation } from './config/mail.config.schema';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [mailConfig], 
-      validationSchema: Joi.object({
-        RABBITMQ_URL: Joi.string().uri().required(),
-        MONGO_URI: Joi.string().required(),
-        PORT: Joi.number().default(3003),
-        SMTP_HOST: Joi.string().required(),
-        SMTP_PORT: Joi.number().required(),
-        SMTP_USER: Joi.string().required(),
-        SMTP_PASSWORD: Joi.string().required(),
-        MAIL_FROM: Joi.string().required(),
-      }),
+      load: [mailConfig],
+      envFilePath: '.env', // or your env file path
+
+
     }),
 
     MongooseModule.forRootAsync({

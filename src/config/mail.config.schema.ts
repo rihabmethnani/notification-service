@@ -1,10 +1,10 @@
 import * as Joi from 'joi';
 
-export const mailConfigSchema = Joi.object({
+export const mailConfigValidation = {
+  MAIL_HOST: Joi.string().required(),
+  MAIL_PORT: Joi.number().required(),
+  MAIL_SECURE: Joi.boolean().required(),
+  MAIL_USER: Joi.string().required(),
+  MAIL_PASSWORD: Joi.string().required(),
   MAIL_FROM: Joi.string().required(),
-  SMTP_HOST: Joi.string().required(),
-  SMTP_PORT: Joi.number().port().required(),
-  SMTP_SECURE: Joi.boolean().required(),
-  SMTP_USER: Joi.string().required(),
-  SMTP_PASSWORD: Joi.string().required(),
-});
+};
